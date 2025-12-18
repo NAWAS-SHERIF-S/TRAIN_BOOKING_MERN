@@ -28,6 +28,7 @@ const PaymentPage = () => {
                 journeyDate: bookingData.journeyDate,
                 class: bookingData.class,
                 passengers: bookingData.passengers,
+                fare: bookingData.fare,
             });
             
             // Show success and navigate

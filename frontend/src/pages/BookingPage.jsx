@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { FaUser, FaTrain, FaCalendarAlt, FaUtensils, FaChevronRight, FaTimes, FaPlus } from 'react-icons/fa';
+import { FaUser, FaTrain, FaCalendarAlt, FaUtensils, FaChevronRight, FaTimes, FaPlus, FaCouch } from 'react-icons/fa';
 import { trainService } from '../services/trainService';
 import { bookingService } from '../services/bookingService';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Loader from '../components/common/Loader';
+import SeatLayout from '../components/SeatLayout';
 import { formatTime } from '../utils/formatters';
 
 const BookingPage = () => {
@@ -16,6 +17,8 @@ const BookingPage = () => {
     const [loading, setLoading] = useState(true);
 
     const [step, setStep] = useState(1);
+    const [showSeatLayout, setShowSeatLayout] = useState(false);
+    const [selectedSeats, setSelectedSeats] = useState([]);
     const [formData, setFormData] = useState({
         from: '',
         to: '',
@@ -23,6 +26,7 @@ const BookingPage = () => {
         class: searchParams.get('class') || 'SL',
         quota: 'General',
         passengers: [],
+        selectedSeats: [],
         autoUpgrade: false,
         cateringService: false
     });
@@ -74,6 +78,20 @@ const BookingPage = () => {
         });
     };
 
+    const handleSeatSelection = () => {
+        if (formData.passengers.length === 0) {
+            alert('Please add passengers first');
+            return;
+        }
+        setShowSeatLayout(true);
+    };
+
+    const handleSeatConfirm = (seats) => {
+        setSelectedSeats(seats);
+        setFormData({...formData, selectedSeats: seats});
+        setShowSeatLayout(false);
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         
@@ -81,6 +99,12 @@ const BookingPage = () => {
             alert('Please add at least one passenger');
             return;
         }
+        
+        // Calculate fare using train-specific pricing
+        const basePrice = train?.pricing?.[formData.class] || 500;
+        const distance = Math.abs((toStation?.distance || 0) - (fromStation?.distance || 0)) || 100;
+        const distanceMultiplier = Math.max(1, distance / 500);
+        const calculatedFare = Math.round(basePrice * distanceMultiplier * Math.max(1, formData.passengers.length));
         
         // Navigate to payment page with booking data
         const bookingData = {
@@ -94,16 +118,21 @@ const BookingPage = () => {
             journeyDate: formData.journeyDate,
             class: formData.class,
             passengers: formData.passengers,
-            fare: formData.passengers.length * 695
+            selectedSeats: selectedSeats,
+            fare: calculatedFare
         };
         
         navigate('/payment', { state: bookingData });
     };
 
     if (loading) return <Loader fullScreen />;
+    if (!train) {
+        navigate('/search');
+        return null;
+    }
 
-    const fromStation = train.stations?.[0];
-    const toStation = train.stations?.[train.stations.length - 1];
+    const fromStation = train.stations?.[0] || { name: 'Unknown', stationCode: 'UNK', distance: 0 };
+    const toStation = train.stations?.[train.stations.length - 1] || { name: 'Unknown', stationCode: 'UNK', distance: 100 };
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -248,6 +277,34 @@ const BookingPage = () => {
                                     </div>
                                 )}
 
+                                {/* Seat Selection */}
+                                {formData.passengers.length > 0 && (
+                                    <div className="mt-6">
+                                        <h4 className="font-semibold mb-3">Seat Selection</h4>
+                                        <div className="bg-blue-50 p-4 rounded-lg">
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <p className="font-medium">Select Seats ({formData.class})</p>
+                                                    <p className="text-sm text-gray-600">
+                                                        {selectedSeats.length > 0 
+                                                            ? `Selected: ${selectedSeats.join(', ')}` 
+                                                            : 'No seats selected (Auto-assign)'}
+                                                    </p>
+                                                </div>
+                                                <Button 
+                                                    type="button" 
+                                                    onClick={handleSeatSelection}
+                                                    variant="outline"
+                                                    size="sm"
+                                                >
+                                                    <FaCouch className="mr-2" />
+                                                    Choose Seats
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Additional Preferences */}
                                 <div className="mt-6 space-y-3">
                                     <h4 className="font-semibold">Additional Preference</h4>
@@ -280,14 +337,38 @@ const BookingPage = () => {
                                         <span>Passengers</span>
                                         <span className="font-semibold">{formData.passengers.length}</span>
                                     </div>
+                                    {selectedSeats.length > 0 && (
+                                        <div className="flex justify-between text-xs">
+                                            <span>Seats</span>
+                                            <span>{selectedSeats.join(', ')}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between">
                                         <span>Base Fare</span>
-                                        <span>₹{formData.passengers.length * 695}</span>
+                                        <span>₹{(() => {
+                                            try {
+                                                const basePrice = train?.pricing?.[formData.class] || 500;
+                                                const distance = Math.abs((toStation?.distance || 0) - (fromStation?.distance || 0)) || 100;
+                                                const distanceMultiplier = Math.max(1, distance / 500);
+                                                return Math.round(basePrice * distanceMultiplier * Math.max(1, formData.passengers.length));
+                                            } catch (e) {
+                                                return 500 * Math.max(1, formData.passengers.length);
+                                            }
+                                        })()}</span>
                                     </div>
                                     <hr />
                                     <div className="flex justify-between font-bold text-lg">
                                         <span>Total</span>
-                                        <span>₹{formData.passengers.length * 695}</span>
+                                        <span>₹{(() => {
+                                            try {
+                                                const basePrice = train?.pricing?.[formData.class] || 500;
+                                                const distance = Math.abs((toStation?.distance || 0) - (fromStation?.distance || 0)) || 100;
+                                                const distanceMultiplier = Math.max(1, distance / 500);
+                                                return Math.round(basePrice * distanceMultiplier * Math.max(1, formData.passengers.length));
+                                            } catch (e) {
+                                                return 500 * Math.max(1, formData.passengers.length);
+                                            }
+                                        })()}</span>
                                     </div>
                                 </div>
                                 <Button
@@ -301,6 +382,85 @@ const BookingPage = () => {
                         </div>
                     </div>
                 </form>
+            </div>
+
+            {/* Seat Layout Modal */}
+            {showSeatLayout && (
+                <SeatLayoutModal 
+                    trainClass={formData.class}
+                    passengerCount={formData.passengers.length}
+                    onClose={() => setShowSeatLayout(false)}
+                    onConfirm={handleSeatConfirm}
+                    preSelectedSeats={selectedSeats}
+                />
+            )}
+        </div>
+    );
+};
+
+// Seat Layout Modal Component
+const SeatLayoutModal = ({ trainClass, passengerCount, onClose, onConfirm, preSelectedSeats }) => {
+    const [selectedSeats, setSelectedSeats] = useState(preSelectedSeats || []);
+
+    const handleSeatToggle = (seatNum) => {
+        if (selectedSeats.includes(seatNum)) {
+            setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
+        } else if (selectedSeats.length < passengerCount) {
+            setSelectedSeats([...selectedSeats, seatNum]);
+        } else {
+            alert(`You can only select ${passengerCount} seats for ${passengerCount} passengers`);
+        }
+    };
+
+    const handleConfirm = () => {
+        if (selectedSeats.length !== passengerCount) {
+            alert(`Please select exactly ${passengerCount} seats for ${passengerCount} passengers`);
+            return;
+        }
+        onConfirm(selectedSeats);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                <div className="bg-primary-600 text-white p-4 flex justify-between items-center">
+                    <div>
+                        <h2 className="text-xl font-bold">Select Seats - {trainClass}</h2>
+                        <p className="text-sm text-primary-100">
+                            Select {passengerCount} seats for {passengerCount} passengers
+                        </p>
+                    </div>
+                    <button onClick={onClose} className="text-white hover:bg-primary-700 p-2 rounded">
+                        <FaTimes size={20} />
+                    </button>
+                </div>
+
+                <SeatLayout 
+                    trainClass={trainClass}
+                    selectedSeats={selectedSeats}
+                    onSeatToggle={handleSeatToggle}
+                    maxSelection={passengerCount}
+                />
+
+                <div className="p-4 bg-gray-50 border-t flex justify-between items-center">
+                    <div className="text-sm text-gray-600">
+                        Selected: {selectedSeats.length}/{passengerCount} seats
+                        {selectedSeats.length > 0 && (
+                            <span className="ml-2 font-semibold">{selectedSeats.join(', ')}</span>
+                        )}
+                    </div>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={onClose}>
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={handleConfirm}
+                            disabled={selectedSeats.length !== passengerCount}
+                        >
+                            Confirm Seats
+                        </Button>
+                    </div>
+                </div>
             </div>
         </div>
     );

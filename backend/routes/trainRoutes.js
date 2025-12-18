@@ -7,6 +7,7 @@ import {
     createTrain,
     updateTrain,
     deleteTrain,
+    getAllStations,
 } from '../controllers/trainController.js';
 import { protect } from '../middleware/auth.js';
 import { admin } from '../middleware/admin.js';
@@ -14,6 +15,7 @@ import { admin } from '../middleware/admin.js';
 const router = express.Router();
 
 router.get('/', getAllTrains);
+router.get('/stations', getAllStations);
 router.get('/search', searchTrains);
 router.get('/number/:trainNumber', getTrainByNumber);
 router.get('/:id', getTrainById);

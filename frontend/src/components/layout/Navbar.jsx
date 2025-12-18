@@ -8,7 +8,8 @@ import {
     FaTicketAlt,
     FaChartLine,
     FaBars,
-    FaTimes
+    FaTimes,
+    FaSearch
 } from 'react-icons/fa';
 import { useAuth } from '../../hooks/useAuth';
 import Button from '../common/Button';
@@ -49,24 +50,27 @@ const Navbar = () => {
     }
 
     return (
-        <nav className="bg-white shadow-lg sticky top-0 z-50">
+        <nav className="bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-200 sticky top-0 z-50">
             <div className="container-custom">
-                <div className="flex justify-between items-center h-16">
+                <div className="flex justify-between items-center h-20">
                     {/* Logo */}
-                    <Link to="/" className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                    <Link to="/" className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl flex items-center justify-center shadow-lg">
                             <FaTrain className="text-white text-xl" />
                         </div>
-                        <span className="text-2xl font-bold text-primary-900">RailBook</span>
+                        <div>
+                            <span className="text-2xl font-bold bg-gradient-to-r from-primary-700 to-primary-900 bg-clip-text text-transparent">RailBook</span>
+                            <div className="text-xs text-slate-500 font-medium">Professional Booking</div>
+                        </div>
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center space-x-8">
+                    <div className="hidden md:flex items-center space-x-1">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.path}
                                 to={link.path}
-                                className="text-gray-600 hover:text-primary-600 font-medium transition-colors flex items-center"
+                                className="text-slate-600 hover:text-primary-600 font-medium transition-all duration-200 flex items-center px-4 py-2 rounded-xl hover:bg-primary-50"
                             >
                                 {link.icon}
                                 {link.name}
@@ -74,24 +78,27 @@ const Navbar = () => {
                         ))}
 
                         {isAuthenticated() ? (
-                            <div className="relative">
+                            <div className="relative ml-4">
                                 <button
                                     onClick={() => setShowUserMenu(!showUserMenu)}
-                                    className="flex items-center gap-2 text-gray-700 hover:text-primary-600 font-medium focus:outline-none"
+                                    className="flex items-center gap-3 text-slate-700 hover:text-primary-600 font-medium focus:outline-none px-4 py-2 rounded-xl hover:bg-slate-50 transition-all"
                                 >
-                                    <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600">
-                                        <FaUser />
+                                    <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center text-white shadow-md">
+                                        <FaUser className="text-sm" />
                                     </div>
-                                    <span>{user?.name?.split(' ')[0]}</span>
+                                    <div className="text-left">
+                                        <div className="text-sm font-semibold">{user?.name?.split(' ')[0]}</div>
+                                        <div className="text-xs text-slate-500">{user?.role}</div>
+                                    </div>
                                 </button>
 
                                 <AnimatePresence>
                                     {showUserMenu && (
                                         <motion.div
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: 10 }}
-                                            className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2"
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-200 py-3 backdrop-blur-md"
                                         >
                                             <div className="px-4 py-2 border-b border-gray-100 mb-2">
                                                 <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
@@ -124,14 +131,16 @@ const Navbar = () => {
                                 </AnimatePresence>
                             </div>
                         ) : (
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-3 ml-4">
                                 <Link to="/login">
-                                    <Button variant="outline" size="sm">
-                                        Login
+                                    <Button variant="secondary" size="sm" className="font-semibold">
+                                        Sign In
                                     </Button>
                                 </Link>
                                 <Link to="/register">
-                                    <Button size="sm">Register</Button>
+                                    <Button size="sm" className="font-semibold shadow-lg">
+                                        Get Started
+                                    </Button>
                                 </Link>
                             </div>
                         )}

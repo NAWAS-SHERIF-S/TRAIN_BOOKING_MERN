@@ -1,27 +1,66 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FaMapMarkerAlt, FaChevronDown } from 'react-icons/fa';
-import { STATION_CODES } from '../utils/stationCodes';
+import { stationService } from '../services/stationService';
 
 const StationDropdown = ({ 
     label, 
     value, 
     onChange, 
     required = false,
-    className = '' 
+    className = '',
+    placeholder = 'Select station'
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [stations, setStations] = useState([]);
+    const [loading, setLoading] = useState(false);
 
-    const stations = Object.entries(STATION_CODES).map(([code, name]) => ({
-        code,
-        name,
-        display: `${name} (${code})`
-    }));
+    useEffect(() => {
+        loadStations();
+    }, []);
 
-    const filteredStations = stations.filter(station =>
-        station.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        station.code.toLowerCase().includes(searchTerm.toLowerCase())
-    ).slice(0, 20);
+    const loadStations = async () => {
+        try {
+            setLoading(true);
+            const stationMap = await stationService.getAllStations();
+            const stationList = Array.from(stationMap.entries()).map(([code, name]) => ({
+                code,
+                name,
+                display: `${name} (${code})`
+            }));
+            console.log(`Loaded ${stationList.length} stations in dropdown`);
+            setStations(stationList);
+        } catch (error) {
+            console.error('Error loading stations:', error);
+            setStations([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const filteredStations = (() => {
+        if (!searchTerm) return [];
+        
+        const searchTermLower = searchTerm.toLowerCase();
+        const codeMatches = [];
+        const nameMatches = [];
+        
+        stations.forEach(station => {
+            const codeLower = station.code.toLowerCase();
+            const nameLower = station.name.toLowerCase();
+            
+            if (codeLower.startsWith(searchTermLower)) {
+                codeMatches.push(station);
+            } else if (codeLower.includes(searchTermLower)) {
+                codeMatches.push(station);
+            } else if (nameLower.includes(searchTermLower)) {
+                nameMatches.push(station);
+            }
+        });
+        
+        // Return code matches first, then name matches
+        return [...codeMatches, ...nameMatches].slice(0, 50);
+    })();
 
     const handleSelect = (station) => {
         onChange(station.display);
@@ -46,7 +85,7 @@ const StationDropdown = ({
                 >
                     <FaMapMarkerAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <span className={value ? 'text-gray-900' : 'text-gray-500'}>
-                        {value || 'Select station'}
+                        {value || placeholder}
                     </span>
                     <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 </button>
@@ -63,24 +102,43 @@ const StationDropdown = ({
                             />
                         </div>
                         
-                        <div className="max-h-60 overflow-y-auto">
-                            {filteredStations.map((station) => (
+                        <div className="max-h-80 overflow-y-auto">
+                            {loading && (
+                                <div className="px-4 py-3 text-gray-500 text-center">
+                                    Loading stations...
+                                </div>
+                            )}
+                            
+                            {!loading && searchTerm.length === 0 && (
+                                <div className="px-4 py-3 text-gray-500 text-center text-sm">
+                                    <div>Type station name or code</div>
+                                    <div className="mt-1 text-xs">{stations.length} stations available</div>
+                                </div>
+                            )}
+                            
+                            {!loading && searchTerm.length > 0 && searchTerm.length < 2 && (
+                                <div className="px-4 py-3 text-gray-500 text-center text-sm">
+                                    Type at least 2 characters
+                                </div>
+                            )}
+                            
+                            {!loading && searchTerm.length > 0 && filteredStations.length === 0 && (
+                                <div className="px-4 py-3 text-gray-500 text-center">
+                                    No stations found for "{searchTerm}"
+                                </div>
+                            )}
+                            
+                            {!loading && filteredStations.map((station) => (
                                 <button
                                     key={station.code}
                                     type="button"
                                     onClick={() => handleSelect(station)}
-                                    className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none border-b border-gray-100 last:border-b-0"
+                                    className="w-full px-4 py-3 text-left hover:bg-primary-50 focus:bg-primary-50 focus:outline-none border-b border-gray-100 last:border-b-0 transition-colors"
                                 >
                                     <div className="font-medium text-gray-900">{station.name}</div>
                                     <div className="text-sm text-gray-500">Code: {station.code}</div>
                                 </button>
                             ))}
-                            
-                            {filteredStations.length === 0 && (
-                                <div className="px-4 py-3 text-gray-500 text-center">
-                                    No stations found
-                                </div>
-                            )}
                         </div>
                     </div>
                 )}

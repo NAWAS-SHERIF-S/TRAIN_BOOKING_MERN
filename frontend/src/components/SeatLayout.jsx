@@ -1,91 +1,260 @@
 import { useState } from 'react';
 import { FaCouch, FaTimes } from 'react-icons/fa';
 
-const SeatLayout = ({ trainClass, onClose }) => {
-    const [selectedSeats, setSelectedSeats] = useState([]);
+// Sleeper/AC Layout Component
+const SleeperLayout = ({ trainClass, selectedSeats, toggleSeat, getSeatStatus, getSeatColor }) => {
+    const compartments = Array.from({ length: 9 }, (_, i) => i + 1);
+    
+    return (
+        <div className="space-y-6">
+            <div className="text-center text-sm text-gray-600 mb-4">
+                <div className="inline-flex items-center gap-4 bg-gray-100 px-4 py-2 rounded-lg">
+                    <span>🚂 Engine</span>
+                    <span>→</span>
+                    <span>Coach Layout</span>
+                    <span>→</span>
+                    <span>🚃 End</span>
+                </div>
+            </div>
+            
+            {compartments.map(comp => (
+                <div key={comp} className="border-2 border-gray-300 rounded-lg p-4 bg-gray-50">
+                    <div className="text-center text-sm font-semibold text-gray-700 mb-3">
+                        Compartment {comp}
+                    </div>
+                    
+                    <div className="flex justify-between">
+                        {/* Main Berths (Left Side) */}
+                        <div className="flex-1">
+                            <div className="grid grid-cols-2 gap-1">
+                                {/* Bay 1 */}
+                                <div className="space-y-1">
+                                    {[1, 2, 3].slice(0, trainClass === '2A' ? 2 : 3).map(level => {
+                                        const seatNum = (comp - 1) * 8 + level;
+                                        const status = getSeatStatus(seatNum);
+                                        return (
+                                            <button
+                                                key={seatNum}
+                                                onClick={() => toggleSeat(seatNum)}
+                                                disabled={status === 'booked'}
+                                                className={`w-16 h-6 text-xs font-semibold transition-colors ${getSeatColor(status)} border border-gray-400`}
+                                                title={`${level === 1 ? 'Lower' : level === 2 ? 'Middle' : 'Upper'} Berth ${seatNum}`}
+                                            >
+                                                {seatNum}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                
+                                {/* Bay 2 */}
+                                <div className="space-y-1">
+                                    {[4, 5, 6].slice(0, trainClass === '2A' ? 2 : 3).map(level => {
+                                        const seatNum = (comp - 1) * 8 + level;
+                                        const status = getSeatStatus(seatNum);
+                                        return (
+                                            <button
+                                                key={seatNum}
+                                                onClick={() => toggleSeat(seatNum)}
+                                                disabled={status === 'booked'}
+                                                className={`w-16 h-6 text-xs font-semibold transition-colors ${getSeatColor(status)} border border-gray-400`}
+                                                title={`${level === 4 ? 'Lower' : level === 5 ? 'Middle' : 'Upper'} Berth ${seatNum}`}
+                                            >
+                                                {seatNum}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Aisle */}
+                        <div className="w-8 flex items-center justify-center">
+                            <div className="w-1 h-full bg-gray-300 rounded"></div>
+                        </div>
+                        
+                        {/* Side Berths (Right Side) */}
+                        <div className="w-20">
+                            <div className="space-y-1">
+                                {[7, 8].map(level => {
+                                    const seatNum = (comp - 1) * 8 + level;
+                                    const status = getSeatStatus(seatNum);
+                                    return (
+                                        <button
+                                            key={seatNum}
+                                            onClick={() => toggleSeat(seatNum)}
+                                            disabled={status === 'booked'}
+                                            className={`w-full h-6 text-xs font-semibold transition-colors ${getSeatColor(status)} border border-gray-400`}
+                                            title={`Side ${level === 7 ? 'Lower' : 'Upper'} Berth ${seatNum}`}
+                                        >
+                                            {seatNum}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
 
-    const getSeatLayout = () => {
+// First AC Layout Component
+const FirstACLayout = ({ selectedSeats, toggleSeat, getSeatStatus, getSeatColor }) => {
+    const cabins = Array.from({ length: 4 }, (_, i) => i + 1);
+    
+    return (
+        <div className="space-y-4">
+            <div className="text-center text-sm text-gray-600 mb-4">
+                <div className="inline-flex items-center gap-4 bg-gray-100 px-4 py-2 rounded-lg">
+                    <span>🚂 Luxury Cabins</span>
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+                {cabins.map(cabin => (
+                    <div key={cabin} className="border-2 border-amber-300 rounded-lg p-4 bg-amber-50">
+                        <div className="text-center text-sm font-semibold text-amber-800 mb-3">
+                            🏠 Cabin {cabin}
+                        </div>
+                        
+                        <div className="space-y-2">
+                            {/* Lower Berths */}
+                            <div className="flex gap-2">
+                                {[1, 2].map(pos => {
+                                    const seatNum = (cabin - 1) * 4 + pos;
+                                    const status = getSeatStatus(seatNum);
+                                    return (
+                                        <button
+                                            key={seatNum}
+                                            onClick={() => toggleSeat(seatNum)}
+                                            disabled={status === 'booked'}
+                                            className={`flex-1 h-8 text-xs font-semibold transition-colors ${getSeatColor(status)} border border-amber-400 rounded`}
+                                            title={`Lower Berth ${seatNum}`}
+                                        >
+                                            L{pos}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            
+                            {/* Upper Berths */}
+                            <div className="flex gap-2">
+                                {[3, 4].map(pos => {
+                                    const seatNum = (cabin - 1) * 4 + pos;
+                                    const status = getSeatStatus(seatNum);
+                                    return (
+                                        <button
+                                            key={seatNum}
+                                            onClick={() => toggleSeat(seatNum)}
+                                            disabled={status === 'booked'}
+                                            className={`flex-1 h-8 text-xs font-semibold transition-colors ${getSeatColor(status)} border border-amber-400 rounded`}
+                                            title={`Upper Berth ${seatNum}`}
+                                        >
+                                            U{pos - 2}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+// Chair Car Layout Component
+const ChairCarLayout = ({ trainClass, selectedSeats, toggleSeat, getSeatStatus, getSeatColor }) => {
+    const rows = Array.from({ length: trainClass === '2S' ? 18 : 13 }, (_, i) => i + 1);
+    
+    return (
+        <div className="space-y-2">
+            <div className="text-center text-sm text-gray-600 mb-4">
+                <div className="inline-flex items-center gap-4 bg-gray-100 px-4 py-2 rounded-lg">
+                    <span>🚂 Engine</span>
+                    <span>→</span>
+                    <span>{trainClass === '2S' ? 'Second Sitting' : 'Chair Car'}</span>
+                    <span>→</span>
+                    <span>🚃 End</span>
+                </div>
+            </div>
+            
+            {rows.map(row => (
+                <div key={row} className="flex items-center gap-2 bg-gray-50 p-2 rounded border">
+                    <div className="w-8 text-xs font-semibold text-gray-600">{row}</div>
+                    
+                    {/* Left Side Seats */}
+                    <div className="flex gap-1">
+                        {[1, 2].map(pos => {
+                            const seatNum = (row - 1) * (trainClass === '2S' ? 6 : 6) + pos;
+                            const status = getSeatStatus(seatNum);
+                            return (
+                                <button
+                                    key={seatNum}
+                                    onClick={() => toggleSeat(seatNum)}
+                                    disabled={status === 'booked'}
+                                    className={`w-8 h-8 text-xs font-semibold transition-colors ${getSeatColor(status)} border border-gray-400 rounded`}
+                                    title={`Seat ${seatNum}`}
+                                >
+                                    {seatNum}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    
+                    {/* Aisle */}
+                    <div className="w-6 flex justify-center">
+                        <div className="w-0.5 h-6 bg-gray-300"></div>
+                    </div>
+                    
+                    {/* Right Side Seats */}
+                    <div className="flex gap-1">
+                        {(trainClass === '2S' ? [3, 4, 5, 6] : [3, 4]).map(pos => {
+                            const seatNum = (row - 1) * (trainClass === '2S' ? 6 : 6) + pos;
+                            const status = getSeatStatus(seatNum);
+                            return (
+                                <button
+                                    key={seatNum}
+                                    onClick={() => toggleSeat(seatNum)}
+                                    disabled={status === 'booked'}
+                                    className={`w-8 h-8 text-xs font-semibold transition-colors ${getSeatColor(status)} border border-gray-400 rounded`}
+                                    title={`Seat ${seatNum}`}
+                                >
+                                    {seatNum}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+const SeatLayout = ({ trainClass, onClose, selectedSeats: externalSelectedSeats, onSeatToggle, maxSelection }) => {
+    const [selectedSeats, setSelectedSeats] = useState(externalSelectedSeats || []);
+
+    const getLayoutInfo = () => {
         switch (trainClass) {
-            case 'SL': // Sleeper Class
-                return {
-                    name: 'Sleeper Class (SL)',
-                    description: '72 berths per coach',
-                    layout: [
-                        { type: 'Lower', seats: Array.from({ length: 8 }, (_, i) => i + 1) },
-                        { type: 'Middle', seats: Array.from({ length: 8 }, (_, i) => i + 9) },
-                        { type: 'Upper', seats: Array.from({ length: 8 }, (_, i) => i + 17) },
-                        { type: 'Side Lower', seats: Array.from({ length: 9 }, (_, i) => i + 25) },
-                        { type: 'Side Upper', seats: Array.from({ length: 9 }, (_, i) => i + 34) },
-                    ]
-                };
-            case '3A': // AC 3 Tier
-                return {
-                    name: 'AC 3 Tier (3A)',
-                    description: '64 berths per coach',
-                    layout: [
-                        { type: 'Lower', seats: Array.from({ length: 8 }, (_, i) => i + 1) },
-                        { type: 'Middle', seats: Array.from({ length: 8 }, (_, i) => i + 9) },
-                        { type: 'Upper', seats: Array.from({ length: 8 }, (_, i) => i + 17) },
-                        { type: 'Side Lower', seats: Array.from({ length: 8 }, (_, i) => i + 25) },
-                        { type: 'Side Upper', seats: Array.from({ length: 8 }, (_, i) => i + 33) },
-                    ]
-                };
-            case '2A': // AC 2 Tier
-                return {
-                    name: 'AC 2 Tier (2A)',
-                    description: '48 berths per coach',
-                    layout: [
-                        { type: 'Lower', seats: Array.from({ length: 8 }, (_, i) => i + 1) },
-                        { type: 'Upper', seats: Array.from({ length: 8 }, (_, i) => i + 9) },
-                        { type: 'Side Lower', seats: Array.from({ length: 8 }, (_, i) => i + 17) },
-                        { type: 'Side Upper', seats: Array.from({ length: 8 }, (_, i) => i + 25) },
-                    ]
-                };
-            case '1A': // First AC
-                return {
-                    name: 'First AC (1A)',
-                    description: '24 berths per coach (4 cabins)',
-                    layout: [
-                        { type: 'Cabin 1 - Lower', seats: [1, 2] },
-                        { type: 'Cabin 1 - Upper', seats: [3, 4] },
-                        { type: 'Cabin 2 - Lower', seats: [5, 6] },
-                        { type: 'Cabin 2 - Upper', seats: [7, 8] },
-                        { type: 'Cabin 3 - Lower', seats: [9, 10] },
-                        { type: 'Cabin 3 - Upper', seats: [11, 12] },
-                        { type: 'Cabin 4 - Lower', seats: [13, 14] },
-                        { type: 'Cabin 4 - Upper', seats: [15, 16] },
-                    ]
-                };
-            case 'CC': // Chair Car
-                return {
-                    name: 'AC Chair Car (CC)',
-                    description: '78 seats per coach',
-                    layout: [
-                        { type: 'Row 1-10', seats: Array.from({ length: 40 }, (_, i) => i + 1) },
-                        { type: 'Row 11-20', seats: Array.from({ length: 38 }, (_, i) => i + 41) },
-                    ]
-                };
-            case '2S': // Second Sitting
-                return {
-                    name: 'Second Sitting (2S)',
-                    description: '108 seats per coach',
-                    layout: [
-                        { type: 'Row 1-15', seats: Array.from({ length: 54 }, (_, i) => i + 1) },
-                        { type: 'Row 16-30', seats: Array.from({ length: 54 }, (_, i) => i + 55) },
-                    ]
-                };
+            case 'SL':
+                return { name: 'Sleeper Class (SL)', description: '72 berths per coach' };
+            case '3A':
+                return { name: 'AC 3 Tier (3A)', description: '64 berths per coach' };
+            case '2A':
+                return { name: 'AC 2 Tier (2A)', description: '48 berths per coach' };
+            case '1A':
+                return { name: 'First AC (1A)', description: '24 berths per coach (4 cabins)' };
+            case 'CC':
+                return { name: 'AC Chair Car (CC)', description: '78 seats per coach' };
+            case '2S':
+                return { name: 'Second Sitting (2S)', description: '108 seats per coach' };
             default:
-                return {
-                    name: 'General Layout',
-                    description: 'Standard seating',
-                    layout: [
-                        { type: 'Seats', seats: Array.from({ length: 72 }, (_, i) => i + 1) },
-                    ]
-                };
+                return { name: 'General Layout', description: 'Standard seating' };
         }
     };
 
-    const layout = getSeatLayout();
+    const layout = getLayoutInfo();
     const bookedSeats = Array.from({ length: 15 }, () => Math.floor(Math.random() * 72) + 1);
 
     const getSeatStatus = (seatNum) => {
@@ -111,10 +280,14 @@ const SeatLayout = ({ trainClass, onClose }) => {
         const status = getSeatStatus(seatNum);
         if (status === 'booked') return;
         
-        if (selectedSeats.includes(seatNum)) {
-            setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
+        if (onSeatToggle) {
+            onSeatToggle(seatNum);
         } else {
-            setSelectedSeats([...selectedSeats, seatNum]);
+            if (selectedSeats.includes(seatNum)) {
+                setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
+            } else {
+                setSelectedSeats([...selectedSeats, seatNum]);
+            }
         }
     };
 
@@ -150,43 +323,28 @@ const SeatLayout = ({ trainClass, onClose }) => {
 
                 {/* Seat Layout */}
                 <div className="p-6 overflow-y-auto max-h-[60vh]">
-                    {layout.layout.map((section, idx) => (
-                        <div key={idx} className="mb-6">
-                            <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                                <FaCouch className="text-primary-600" />
-                                {section.type}
-                            </h3>
-                            <div className="grid grid-cols-8 md:grid-cols-12 gap-2">
-                                {section.seats.map((seatNum) => {
-                                    const status = getSeatStatus(seatNum);
-                                    return (
-                                        <button
-                                            key={seatNum}
-                                            onClick={() => toggleSeat(seatNum)}
-                                            disabled={status === 'booked'}
-                                            className={`w-10 h-10 rounded flex items-center justify-center text-sm font-semibold transition-colors ${getSeatColor(status)}`}
-                                        >
-                                            {seatNum}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    ))}
+                    {trainClass === 'SL' || trainClass === '3A' || trainClass === '2A' ? (
+                        <SleeperLayout trainClass={trainClass} selectedSeats={externalSelectedSeats || selectedSeats} toggleSeat={toggleSeat} getSeatStatus={getSeatStatus} getSeatColor={getSeatColor} />
+                    ) : trainClass === '1A' ? (
+                        <FirstACLayout selectedSeats={externalSelectedSeats || selectedSeats} toggleSeat={toggleSeat} getSeatStatus={getSeatStatus} getSeatColor={getSeatColor} />
+                    ) : (
+                        <ChairCarLayout trainClass={trainClass} selectedSeats={externalSelectedSeats || selectedSeats} toggleSeat={toggleSeat} getSeatStatus={getSeatStatus} getSeatColor={getSeatColor} />
+                    )}
                 </div>
 
-                {/* Footer */}
-                <div className="p-4 bg-gray-50 border-t flex justify-between items-center">
-                    <div className="text-sm text-gray-600">
-                        Selected Seats: <span className="font-semibold">{selectedSeats.length > 0 ? selectedSeats.join(', ') : 'None'}</span>
+                {onClose && (
+                    <div className="p-4 bg-gray-50 border-t flex justify-between items-center">
+                        <div className="text-sm text-gray-600">
+                            Selected Seats: <span className="font-semibold">{(externalSelectedSeats || selectedSeats).length > 0 ? (externalSelectedSeats || selectedSeats).join(', ') : 'None'}</span>
+                        </div>
+                        <button
+                            onClick={onClose}
+                            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                        >
+                            Close
+                        </button>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                    >
-                        Close
-                    </button>
-                </div>
+                )}
             </div>
         </div>
     );

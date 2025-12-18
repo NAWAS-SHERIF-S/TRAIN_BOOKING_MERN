@@ -58,6 +58,14 @@ const trainSchema = new mongoose.Schema(
             enum: ['SL', '3A', '2A', '1A', 'CC', '2S'],
             default: ['SL', '3A'],
         },
+        pricing: {
+            SL: { type: Number, default: 195 },
+            '3A': { type: Number, default: 695 },
+            '2A': { type: Number, default: 1075 },
+            '1A': { type: Number, default: 1675 },
+            CC: { type: Number, default: 695 },
+            '2S': { type: Number, default: 195 },
+        },
         isActive: {
             type: Boolean,
             default: true,

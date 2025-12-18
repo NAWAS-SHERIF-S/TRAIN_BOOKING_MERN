@@ -86,3 +86,16 @@ export const getMe = async (req, res, next) => {
         next(error);
     }
 };
+
+export const getAllUsers = async (req, res, next) => {
+    try {
+        if (req.user.role !== 'admin') {
+            return next(new ApiError(403, 'Not authorized as admin'));
+        }
+        
+        const users = await User.find().select('-password').sort({ createdAt: -1 });
+        res.json({ success: true, data: users });
+    } catch (error) {
+        next(error);
+    }
+};

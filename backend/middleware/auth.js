@@ -28,3 +28,11 @@ export const protect = async (req, res, next) => {
         return next(new ApiError(401, 'Not authorized, no token'));
     }
 };
+
+export const admin = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+        next();
+    } else {
+        return next(new ApiError(403, 'Not authorized as admin'));
+    }
+};

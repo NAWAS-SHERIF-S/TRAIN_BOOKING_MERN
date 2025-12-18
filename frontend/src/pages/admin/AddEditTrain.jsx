@@ -21,6 +21,14 @@ const AddEditTrain = () => {
         trainType: 'Express',
         runningDays: [],
         classes: [],
+        pricing: {
+            SL: 195,
+            '3A': 695,
+            '2A': 1075,
+            '1A': 1675,
+            CC: 695,
+            '2S': 195,
+        },
         stations: [
             { name: '', stationCode: '', arrivalTime: '--', departureTime: '', platform: '', distance: 0 },
         ],
@@ -180,6 +188,32 @@ const AddEditTrain = () => {
                                     </label>
                                 ))}
                             </div>
+                        </div>
+
+                        <div className="mt-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-4">Base Pricing (₹)</label>
+                            <div className="grid md:grid-cols-3 gap-4">
+                                {TRAIN_CLASSES.map((cls) => (
+                                    <div key={cls.value}>
+                                        <label className="block text-sm font-medium text-gray-600 mb-1">{cls.label}</label>
+                                        <input
+                                            type="number"
+                                            value={formData.pricing[cls.value]}
+                                            onChange={(e) => setFormData(prev => ({
+                                                ...prev,
+                                                pricing: {
+                                                    ...prev.pricing,
+                                                    [cls.value]: parseInt(e.target.value) || 0
+                                                }
+                                            }))}
+                                            className="input-field"
+                                            min="0"
+                                            step="10"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-sm text-gray-500 mt-2">Base prices per passenger. Final fare will be calculated based on distance.</p>
                         </div>
                     </Card>
 

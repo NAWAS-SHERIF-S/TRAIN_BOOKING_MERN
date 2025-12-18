@@ -6,17 +6,8 @@ const generatePNR = () => {
     return Math.floor(1000000000 + Math.random() * 9000000000).toString();
 };
 
-const calculateFare = (distance, trainClass, passengerCount) => {
-    const basePrices = {
-        'SL': 195,
-        '3A': 695,
-        '2A': 1075,
-        '1A': 1675,
-        'CC': 695,
-        '2S': 195,
-    };
-
-    const basePrice = basePrices[trainClass] || 500;
+const calculateFare = (distance, trainClass, passengerCount, train) => {
+    const basePrice = train.pricing?.[trainClass] || 500;
     const distanceMultiplier = Math.max(1, distance / 500);
     const totalFare = Math.round(basePrice * distanceMultiplier * passengerCount);
 
@@ -25,7 +16,7 @@ const calculateFare = (distance, trainClass, passengerCount) => {
 
 export const createBooking = async (req, res, next) => {
     try {
-        const { trainId, from, to, journeyDate, class: travelClass, passengers } = req.body;
+        const { trainId, from, to, journeyDate, class: travelClass, passengers, fare: providedFare } = req.body;
 
         if (!trainId || !from || !to || !journeyDate || !travelClass || !passengers || passengers.length === 0) {
             return next(new ApiError(400, 'Please provide all required fields'));
@@ -37,23 +28,27 @@ export const createBooking = async (req, res, next) => {
             return next(new ApiError(404, 'Train not found'));
         }
 
-        // Extract station names and codes
-        const fromStationName = from.split('(')[0].trim();
-        const toStationName = to.split('(')[0].trim();
-        
-        // Find stations with flexible matching
-        const fromStation = train.stations.find((s) =>
-            s.name.toLowerCase().includes(fromStationName.toLowerCase()) ||
-            fromStationName.toLowerCase().includes(s.name.toLowerCase())
-        ) || train.stations[0]; // Default to first station if not found
-        
-        const toStation = train.stations.find((s) =>
-            s.name.toLowerCase().includes(toStationName.toLowerCase()) ||
-            toStationName.toLowerCase().includes(s.name.toLowerCase())
-        ) || train.stations[train.stations.length - 1]; // Default to last station if not found
+        // Use provided fare from frontend, or calculate as fallback
+        let fare = providedFare;
+        if (!fare) {
+            // Extract station names and codes
+            const fromStationName = from.split('(')[0].trim();
+            const toStationName = to.split('(')[0].trim();
+            
+            // Find stations with flexible matching
+            const fromStation = train.stations.find((s) =>
+                s.name.toLowerCase().includes(fromStationName.toLowerCase()) ||
+                fromStationName.toLowerCase().includes(s.name.toLowerCase())
+            ) || train.stations[0];
+            
+            const toStation = train.stations.find((s) =>
+                s.name.toLowerCase().includes(toStationName.toLowerCase()) ||
+                toStationName.toLowerCase().includes(s.name.toLowerCase())
+            ) || train.stations[train.stations.length - 1];
 
-        const distance = Math.abs(toStation.distance - fromStation.distance);
-        const fare = calculateFare(distance, travelClass, passengers.length);
+            const distance = Math.abs(toStation.distance - fromStation.distance);
+            fare = calculateFare(distance, travelClass, passengers.length, train);
+        }
 
         const pnr = generatePNR();
 

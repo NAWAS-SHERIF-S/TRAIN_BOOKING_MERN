@@ -54,9 +54,8 @@ const SearchTrains = () => {
         }
     };
 
-    const getClassPrice = (trainClass) => {
-        const prices = { 'SL': 195, '3A': 695, '2A': 1075, '1A': 1675, 'CC': 695, '2S': 195 };
-        return prices[trainClass] || 500;
+    const getClassPrice = (train, trainClass) => {
+        return train.pricing?.[trainClass] || 500;
     };
 
     const getAvailability = () => {
@@ -79,7 +78,11 @@ const SearchTrains = () => {
                                 onChange={(value) => setSearchData({ ...searchData, from: value })}
                             />
                         </div>
-                        <button type="button" className="p-2 hover:bg-gray-100 rounded">
+                        <button 
+                            type="button" 
+                            onClick={() => setSearchData({ ...searchData, from: searchData.to, to: searchData.from })}
+                            className="p-2 hover:bg-gray-100 rounded"
+                        >
                             <FaExchangeAlt className="text-primary-600" />
                         </button>
                         <div className="flex-1 min-w-[200px]">
@@ -216,7 +219,7 @@ const SearchTrains = () => {
                                                 <div key={cls} className="border rounded p-3">
                                                     <div className="text-sm font-semibold mb-1">{cls}</div>
                                                     <div className="flex items-center gap-1 text-lg font-bold text-green-600 mb-1">
-                                                        <FaRupeeSign className="text-sm" />{getClassPrice(cls)}
+                                                        <FaRupeeSign className="text-sm" />{getClassPrice(train, cls)}
                                                     </div>
                                                     <div className="text-xs text-gray-600 mb-2">
                                                         {avail.count} {avail.status}

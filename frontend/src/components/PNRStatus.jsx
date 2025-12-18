@@ -85,8 +85,31 @@ const PNRStatus = () => {
                             <div>
                                 <h3 className="text-xl font-bold text-gray-900">PNR: {pnrData.pnr}</h3>
                                 <p className="text-gray-600">Booking Details</p>
+                                {pnrData.createdAt && (
+                                    <p className="text-sm text-gray-500">
+                                        Booked on: {new Date(pnrData.createdAt).toLocaleDateString('en-IN')}
+                                    </p>
+                                )}
                             </div>
-                            <Badge variant="success">Confirmed</Badge>
+                            <div className="text-right">
+                                <Badge 
+                                    variant={pnrData.bookingStatus === 'Confirmed' ? 'success' : 
+                                           pnrData.bookingStatus === 'Cancelled' ? 'error' : 'warning'}
+                                >
+                                    {pnrData.bookingStatus || 'Confirmed'}
+                                </Badge>
+                                {pnrData.paymentStatus && (
+                                    <div className="mt-2">
+                                        <Badge 
+                                            variant={pnrData.paymentStatus === 'Completed' ? 'success' : 
+                                                   pnrData.paymentStatus === 'Failed' ? 'error' : 'warning'}
+                                            className="text-xs"
+                                        >
+                                            Payment: {pnrData.paymentStatus}
+                                        </Badge>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -103,7 +126,14 @@ const PNRStatus = () => {
                                     <FaCalendarAlt className="text-primary-600 mr-3" />
                                     <div>
                                         <p className="font-semibold">Journey Date</p>
-                                        <p className="text-sm text-gray-600">{pnrData.journeyDate}</p>
+                                        <p className="text-sm text-gray-600">
+                                            {new Date(pnrData.journeyDate).toLocaleDateString('en-IN', {
+                                                weekday: 'short',
+                                                year: 'numeric',
+                                                month: 'short',
+                                                day: 'numeric'
+                                            })}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -115,8 +145,8 @@ const PNRStatus = () => {
                                 </div>
 
                                 <div>
-                                    <p className="font-semibold">Class</p>
-                                    <p className="text-sm text-gray-600">{pnrData.class}</p>
+                                    <p className="font-semibold">Class & Fare</p>
+                                    <p className="text-sm text-gray-600">{pnrData.class} - ₹{pnrData.fare}</p>
                                 </div>
                             </div>
                         </div>
@@ -133,20 +163,31 @@ const PNRStatus = () => {
                                         <thead>
                                             <tr className="bg-gray-50">
                                                 <th className="border p-3 text-left">S.No</th>
-                                                <th className="border p-3 text-left">Current Status</th>
-                                                <th className="border p-3 text-left">Prediction</th>
+                                                <th className="border p-3 text-left">Name</th>
+                                                <th className="border p-3 text-left">Age</th>
+                                                <th className="border p-3 text-left">Gender</th>
+                                                <th className="border p-3 text-left">Seat</th>
+                                                <th className="border p-3 text-left">Status</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {pnrData.passengers.map((passenger, index) => (
                                                 <tr key={index}>
-                                                    <td className="border p-3">{passenger.number}</td>
+                                                    <td className="border p-3">{index + 1}</td>
+                                                    <td className="border p-3 font-medium">{passenger.name}</td>
+                                                    <td className="border p-3">{passenger.age}</td>
+                                                    <td className="border p-3">{passenger.gender}</td>
+                                                    <td className="border p-3">
+                                                        {pnrData.seatDetails?.coach && pnrData.seatDetails?.seats?.[index] 
+                                                            ? `${pnrData.seatDetails.coach}-${pnrData.seatDetails.seats[index]}`
+                                                            : 'TBA'
+                                                        }
+                                                    </td>
                                                     <td className="border p-3">
                                                         <Badge variant="success">
-                                                            {passenger.currentStatus}
+                                                            {pnrData.bookingStatus || 'Confirmed'}
                                                         </Badge>
                                                     </td>
-                                                    <td className="border p-3">{passenger.prediction}</td>
                                                 </tr>
                                             ))}
                                         </tbody>

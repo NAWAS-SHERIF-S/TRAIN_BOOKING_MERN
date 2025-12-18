@@ -190,3 +190,33 @@ export const deleteTrain = async (req, res, next) => {
         next(error);
     }
 };
+
+export const getAllStations = async (req, res, next) => {
+    try {
+        const trains = await Train.find({ isActive: true }, 'stations');
+        const stationMap = new Map();
+        
+        trains.forEach(train => {
+            if (train.stations && Array.isArray(train.stations)) {
+                train.stations.forEach(station => {
+                    if (station.stationCode && station.name) {
+                        stationMap.set(station.stationCode, station.name);
+                    }
+                });
+            }
+        });
+        
+        const stations = Array.from(stationMap.entries()).map(([code, name]) => ({
+            code,
+            name
+        }));
+        
+        res.json({
+            success: true,
+            data: stations,
+            count: stations.length,
+        });
+    } catch (error) {
+        next(error);
+    }
+};

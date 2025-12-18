@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { FaMapMarkerAlt, FaTimes } from 'react-icons/fa';
-import { trainService } from '../services/trainService';
-import { searchStations } from '../utils/stationCodes'; // Keep for fallback or remove if unused
+import { stationService } from '../services/stationService';
 
 const StationAutocomplete = ({
     label,
@@ -15,8 +14,22 @@ const StationAutocomplete = ({
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(-1);
+    const [allStations, setAllStations] = useState([]);
     const inputRef = useRef(null);
     const suggestionsRef = useRef(null);
+
+    useEffect(() => {
+        loadStations();
+    }, []);
+
+    const loadStations = async () => {
+        const stationMap = await stationService.getAllStations();
+        const stationList = Array.from(stationMap.entries()).map(([code, name]) => ({
+            code,
+            name
+        }));
+        setAllStations(stationList);
+    };
 
     useEffect(() => {
         setQuery(value || '');
@@ -27,7 +40,24 @@ const StationAutocomplete = ({
         setQuery(inputValue);
 
         if (inputValue.length >= 2) {
-            const results = searchStations(inputValue);
+            const searchTerm = inputValue.toLowerCase();
+            const codeMatches = [];
+            const nameMatches = [];
+            
+            allStations.forEach(station => {
+                const codeLower = station.code.toLowerCase();
+                const nameLower = station.name.toLowerCase();
+                
+                if (codeLower.startsWith(searchTerm)) {
+                    codeMatches.push({ ...station, type: 'code' });
+                } else if (codeLower.includes(searchTerm)) {
+                    codeMatches.push({ ...station, type: 'code' });
+                } else if (nameLower.includes(searchTerm)) {
+                    nameMatches.push({ ...station, type: 'name' });
+                }
+            });
+            
+            const results = [...codeMatches, ...nameMatches].slice(0, 20);
             setSuggestions(results);
             setShowSuggestions(true);
             setSelectedIndex(-1);
